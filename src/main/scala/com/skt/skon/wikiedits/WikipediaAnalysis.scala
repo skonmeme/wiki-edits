@@ -37,6 +37,7 @@ object WikipediaAnalysis {
         environment.setStateBackend(new org.apache.flink.runtime.state.filesystem.FsStateBackend(uri))
       case RocksDBStateBackend(uri) =>
         environment.setStateBackend(new org.apache.flink.contrib.streaming.state.RocksDBStateBackend(uri))
+      case _ => ()
     }
 
     wikipediaConfig.checkpointStateBackend match {
@@ -47,11 +48,16 @@ object WikipediaAnalysis {
     val wikiEdits = environment
       .addSource(new WikipediaEditsSource("irc.wikimedia.org", 6667, "#en.wikipedia"))
       .keyBy(_.getUser)
-      .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
+      .window(TumblingProcessingTimeWindows.of(Time.seconds(1)))
       .aggregate(new WikipediaEditEventAggregate)
-      .map(_.toString)
-      .filter(_.isEmpty)
+
+    val toKafka = wikiEdits
+      .setParallelism(1)
       .addSink(wikiProducer)
+
+    val toConsole = wikiEdits
+      .setParallelism(1)
+      .print
 
     environment.execute
   }

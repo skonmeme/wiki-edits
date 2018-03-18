@@ -3,7 +3,7 @@ package com.skt.skon.wikiedits.aggregator
 import org.apache.flink.api.common.functions.AggregateFunction
 import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditEvent
 
-class WikipediaEditEventAggregate extends AggregateFunction[WikipediaEditEvent, (String, Long), (String, Long)] {
+class WikipediaEditEventAggregate extends AggregateFunction[WikipediaEditEvent, (String, Long), String] {
   override def createAccumulator(): (String, Long) =
     ("", 0L)
 
@@ -13,6 +13,6 @@ class WikipediaEditEventAggregate extends AggregateFunction[WikipediaEditEvent, 
   override def merge(a: (String, Long), b: (String, Long)): (String, Long) =
     (a._1, a._2 + b._2)
 
-  override def getResult(accumulator: (String, Long)): (String, Long) =
-    accumulator
+  override def getResult(accumulator: (String, Long)): String =
+    accumulator.toString
 }
