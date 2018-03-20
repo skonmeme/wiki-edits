@@ -4,7 +4,8 @@ import scopt.OptionParser
 
 case class WikipediaAnalysisConfig(sessionGapInMillis: Long = 2000,
                                    brokers: Seq[String] = Seq(),
-                                   topic: String = "",
+                                   topicSummary: String = "",
+                                   topicContents: String = "",
                                    groupId: String = "",
                                    sourceTasks: Int = -1,
                                    windowTasks: Int = -1,
@@ -25,60 +26,64 @@ object WikipediaAnalysisConfig {
 
       help("help").text("prints this usage text")
 
-      opt[Long]("sessionGap")
+      opt[Long]('s', "sessionGap")
         .required()
         .action((x, c) => c.copy(sessionGapInMillis = x))
         .validate(x => if (x > 0) success else failure(s"sessionGap must be positive but $x"))
         .text("Session gap in milliseconds")
 
-      opt[Seq[String]]("brokers")
+      opt[Seq[String]]('b', "brokers")
         .required()
         .valueName("<addr:port>,<addr:port>...")
         .action((x, c) => c.copy(brokers = x))
         .text("List of Kafka brokers")
 
-      opt[String]("topic")
+      opt[String]('t', "topic-summary")
         .required()
-        .action((x, c) => c.copy(topic = x))
-        .text("Kafka topic")
+        .action((x, c) => c.copy(topicSummary = x))
+        .text("Kafka topic for Summary")
 
-      opt[String]("groupId")
+      opt[String]('g', "groupId")
         .required()
         .action((x, c) => c.copy(groupId = x))
         .text("Kafka consumer group id")
 
-      opt[Int]("sourceTasks")
+      opt[String]('c', "topic-contents")
+        .action((x, c) => c.copy(topicContents = x))
+        .text("Kafka topic for Contents")
+
+      opt[Int]("source-tasks")
         .action((x, c) => c.copy(sourceTasks = x))
         .text("# source tasks (recommendation : # partitions of input topic)")
 
-      opt[Int]("windowTasks")
+      opt[Int]("window-tasks")
         .action((x, c) => c.copy(windowTasks = x ))
         .text("# window tasks")
 
-      opt[Int]("sinkTasks")
+      opt[Int]("sink-tasks")
         .action((x, c) => c.copy(sinkTasks = x))
         .text("# sink tasks")
 
-      opt[Long]("autoWatermarkInterval")
+      opt[Long]("auto-watermark-interval")
         .action((x, c) => c.copy(autoWatermarkInterval = x))
         .validate(x => if (x > 0) success else failure(s"autoWatermarkInterval must be positive but $x"))
 
-      opt[Long]("maxOutOfOrderness")
+      opt[Long]("max-out-of-orderness")
         .action((x, c) => c.copy(maxOutOfOrderness = x))
         .validate(x => if (x > 0) success else failure(s"maxOutOfOrderness must be positive but $x"))
 
-      opt[Long]("kafkaMaxRequestSize")
+      opt[Long]("kafka-max-request-size")
         .action((x, c) => c.copy(kafkaMaxRequestSize = x))
         .validate(x => if (x > 0) success else failure(s"kafkaMaxRequestSize must be positive but $x"))
 
-      opt[Long]("kafkaTransactionMaxTimeout")
+      opt[Long]("kafka-transaction-max-timeout")
         .action((x, c) => c.copy(kafkaTransactionMaxTimeout = x))
         .validate(x => if (x > 0) success else failure(s"kafkaTransactionMaxTimeout must be positive but $x"))
 
-      opt[String]("checkpointDataUri")
+      opt[String]("checkpoint-data-uri")
         .action((x, c) => c.copy(checkpointDataUri = x))
 
-      opt[String]("checkpointStateBackend")
+      opt[String]("checkpoint-state-backend")
         .action { (x, c) =>
           val stateBackend = x.toLowerCase match {
             case "memory" => MemoryStateBackend()
@@ -94,7 +99,7 @@ object WikipediaAnalysisConfig {
           }
         }
 
-      opt[Long]("checkpointInterval")
+      opt[Long]("checkpoint-interval")
         .action((x, c) => c.copy(checkpointInterval = x))
         .validate(x => if (x > 0) success else failure(s"checkpointInterval must be positive but $x"))
     }

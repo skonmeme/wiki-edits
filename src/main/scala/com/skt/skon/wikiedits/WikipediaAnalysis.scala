@@ -4,12 +4,15 @@ import java.util.Properties
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala._
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
+import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows
+import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011
 import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditsSource
+
 import com.skt.skon.wikiedits.aggregator._
 import com.skt.skon.wikiedits.config._
+import com.skt.skon.wikiedits.eventTime.WikipediaTimestampsAndWatermarks
 
 object WikipediaAnalysis {
 
@@ -21,14 +24,17 @@ object WikipediaAnalysis {
     kafkaProducerProperties.put("max.request.size", wikipediaConfig.kafkaMaxRequestSize.toString)
     kafkaProducerProperties.put("transaction.timeout.ms", wikipediaConfig.kafkaTransactionMaxTimeout.toString)
 
-    val wikiProducer = new FlinkKafkaProducer011[String](
-      wikipediaConfig.topic,
+    val wikiProducerSummary = new FlinkKafkaProducer011[String](
+      wikipediaConfig.topicSummary,
       new SimpleStringSchema,
       kafkaProducerProperties
     )
-    wikiProducer.setWriteTimestampToKafka(true)
+    wikiProducerSummary.setWriteTimestampToKafka(true)
 
+    // Generate Flink environmental settings
     val environment = StreamExecutionEnvironment.getExecutionEnvironment
+    environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+    environment.setParallelism(2)
 
     wikipediaConfig.checkpointStateBackend match {
       case MemoryStateBackend() =>
@@ -47,16 +53,29 @@ object WikipediaAnalysis {
 
     val wikiEdits = environment
       .addSource(new WikipediaEditsSource("irc.wikimedia.org", 6667, "#en.wikipedia"))
+      .assignTimestampsAndWatermarks(new WikipediaTimestampsAndWatermarks)
       .keyBy(_.getUser)
-      .window(TumblingProcessingTimeWindows.of(Time.seconds(1)))
-      .aggregate(new WikipediaEditEventAggregate)
+      .window(EventTimeSessionWindows.withGap(Time.minutes(1)))
 
-    val toKafka = wikiEdits
-      .setParallelism(1)
-      .addSink(wikiProducer)
+    val toKafkaSummary = wikiEdits
+      .aggregate(new WikipediaEditEventSummaryAggregate)
+      .addSink(wikiProducerSummary)
+
+    if (wikipediaConfig.topicContents != "") {
+      val wikiProducerContents = new FlinkKafkaProducer011[String](
+        wikipediaConfig.topicContents,
+        new SimpleStringSchema,
+        kafkaProducerProperties
+      )
+      wikiProducerContents.setWriteTimestampToKafka(true)
+
+      val toKafkaContents = wikiEdits
+        .aggregate(new WikipediaEditEventContentsAggregate)
+        .addSink(wikiProducerContents)
+    }
 
     val toConsole = wikiEdits
-      .setParallelism(1)
+      .aggregate(new WikipediaEditEventSummaryAggregate)
       .print
 
     environment.execute
