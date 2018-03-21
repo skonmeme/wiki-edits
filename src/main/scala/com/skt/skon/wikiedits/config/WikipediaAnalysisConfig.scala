@@ -26,7 +26,7 @@ object WikipediaAnalysisConfig {
 
       help("help").text("prints this usage text")
 
-      opt[Long]('s', "sessionGap")
+      opt[Long]('s', "session-gap")
         .required()
         .action((x, c) => c.copy(sessionGapInMillis = x))
         .validate(x => if (x > 0) success else failure(s"sessionGap must be positive but $x"))
@@ -43,7 +43,7 @@ object WikipediaAnalysisConfig {
         .action((x, c) => c.copy(topicSummary = x))
         .text("Kafka topic for Summary")
 
-      opt[String]('g', "groupId")
+      opt[String]('g', "group-id")
         .required()
         .action((x, c) => c.copy(groupId = x))
         .text("Kafka consumer group id")
