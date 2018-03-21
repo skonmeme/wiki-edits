@@ -25,9 +25,8 @@ class WikipediaEditEventSummaryAggregate extends AggregateFunction[WikipediaEdit
     (a._1, a._2 + b._2, a._3 + b._3)
 
   override def getResult(accumulator: (String, Long, Long)): String = {
-    //write(WikipediaEditSummary(accumulator._1, accumulator._2, accumulator._3)))
     implicit val Formats = DefaultFormats
-    write(accumulator)
+    write(WikipediaEditSummary.tupled(accumulator))
   }
 }
 
@@ -43,6 +42,6 @@ class WikipediaEditEventContentsAggregate extends AggregateFunction[WikipediaEdi
 
   override def getResult(accumulator: (String, Long, Array[String], Array[String])): String = {
     implicit val Formats = DefaultFormats
-    write(accumulator)
+    write(WikipediaEditContents.tupled(accumulator))
   }
 }
