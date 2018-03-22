@@ -16,7 +16,8 @@ case class WikipediaAnalysisConfig(sessionGapInMillis: Long = 2000,
                                    kafkaTransactionMaxTimeout: Long = 900000,
                                    checkpointStateBackend: StateBackend = NoStateBackend(),
                                    checkpointDataUri: String = "",
-                                   checkpointInterval: Long = -1
+                                   checkpointInterval: Long = -1,
+                                   sessionTimeout: Long = 60
                                   )
 
 object WikipediaAnalysisConfig {
@@ -29,7 +30,7 @@ object WikipediaAnalysisConfig {
       opt[Long]('s', "session-gap")
         .required()
         .action((x, c) => c.copy(sessionGapInMillis = x))
-        .validate(x => if (x > 0) success else failure(s"sessionGap must be positive but $x"))
+        .validate(x => if (x > 0) success else failure(s"session-gap must be positive but $x"))
         .text("Session gap in milliseconds")
 
       opt[Seq[String]]('b', "brokers")
@@ -66,19 +67,24 @@ object WikipediaAnalysisConfig {
 
       opt[Long]("auto-watermark-interval")
         .action((x, c) => c.copy(autoWatermarkInterval = x))
-        .validate(x => if (x > 0) success else failure(s"autoWatermarkInterval must be positive but $x"))
+        .validate(x => if (x > 0) success else failure(s"auto-watermark-interval must be positive but $x"))
 
       opt[Long]("max-out-of-orderness")
         .action((x, c) => c.copy(maxOutOfOrderness = x))
-        .validate(x => if (x > 0) success else failure(s"maxOutOfOrderness must be positive but $x"))
+        .validate(x => if (x > 0) success else failure(s"max-out-of-orderness must be positive but $x"))
 
       opt[Long]("kafka-max-request-size")
         .action((x, c) => c.copy(kafkaMaxRequestSize = x))
-        .validate(x => if (x > 0) success else failure(s"kafkaMaxRequestSize must be positive but $x"))
+        .validate(x => if (x > 0) success else failure(s"kafka-max-request-size must be positive but $x"))
 
       opt[Long]("kafka-transaction-max-timeout")
         .action((x, c) => c.copy(kafkaTransactionMaxTimeout = x))
-        .validate(x => if (x > 0) success else failure(s"kafkaTransactionMaxTimeout must be positive but $x"))
+        .validate(x => if (x > 0) success else failure(s"kafka-transaction-max-timeout must be positive but $x"))
+
+      opt[Long]("session-timeout")
+        .action((x, c) => c.copy(sessionTimeout = x))
+        .validate(x => if (x > 0) success else failure(s"session-timeout must be positive but $x"))
+        .text("collection timeout (minute)")
 
       opt[String]("checkpoint-data-uri")
         .action((x, c) => c.copy(checkpointDataUri = x))
@@ -89,6 +95,7 @@ object WikipediaAnalysisConfig {
             case "memory" => MemoryStateBackend()
             case "fs" => FsStateBackend(c.checkpointDataUri)
             case "rocksdb" => RocksDBStateBackend(c.checkpointDataUri)
+            case _ => NoStateBackend()
           }
           c.copy(checkpointStateBackend = stateBackend)
         }
@@ -101,7 +108,7 @@ object WikipediaAnalysisConfig {
 
       opt[Long]("checkpoint-interval")
         .action((x, c) => c.copy(checkpointInterval = x))
-        .validate(x => if (x > 0) success else failure(s"checkpointInterval must be positive but $x"))
+        .validate(x => if (x > 0) success else failure(s"checkpoint-interval must be positive but $x"))
     }
 
     parser.parse(args, WikipediaAnalysisConfig()) match {

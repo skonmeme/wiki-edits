@@ -6,10 +6,9 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows
-import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011
 import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditsSource
-
 import com.skt.skon.wikiedits.aggregator._
 import com.skt.skon.wikiedits.config._
 import com.skt.skon.wikiedits.eventTime.WikipediaTimestampsAndWatermarks
@@ -48,14 +47,20 @@ object WikipediaAnalysis {
 
     wikipediaConfig.checkpointStateBackend match {
       case NoStateBackend() => ()
-      case _ => environment.enableCheckpointing(wikipediaConfig.checkpointInterval)
+      case _ => {
+        environment.enableCheckpointing(wikipediaConfig.checkpointInterval)
+        environment.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE)
+        environment.getCheckpointConfig.setMinPauseBetweenCheckpoints(wikipediaConfig.checkpointInterval / 2)
+        environment.getCheckpointConfig.setCheckpointTimeout(wikipediaConfig.checkpointInterval * 10)
+        environment.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
+      }
     }
 
     val wikiEdits = environment
       .addSource(new WikipediaEditsSource("irc.wikimedia.org", 6667, "#en.wikipedia"))
       .assignTimestampsAndWatermarks(new WikipediaTimestampsAndWatermarks)
       .keyBy(_.getUser)
-      .window(EventTimeSessionWindows.withGap(Time.minutes(1)))
+      .window(EventTimeSessionWindows.withGap(Time.minutes(wikipediaConfig.sessionTimeout)))
 
     val toKafkaSummary = wikiEdits
       .aggregate(new WikipediaEditEventSummaryAggregate)
@@ -78,7 +83,7 @@ object WikipediaAnalysis {
       .aggregate(new WikipediaEditEventSummaryAggregate)
       .print
 
-    environment.execute
+    environment.execute("Wikipedia Edit logs")
   }
 
 }
