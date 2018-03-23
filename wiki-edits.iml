@@ -76,5 +76,8 @@
     <orderEntry type="library" name="Maven: org.json4s:json4s-ast_2.11:3.5.3" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-scalap_2.11:3.5.3" level="project" />
     <orderEntry type="library" name="Maven: com.thoughtworks.paranamer:paranamer:2.8" level="project" />
+    <orderEntry type="library" name="Maven: com.github.nscala-time:nscala-time_2.11:2.18.0" level="project" />
+    <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.9" level="project" />
+    <orderEntry type="library" name="Maven: org.joda:joda-convert:1.2" level="project" />
   </component>
 </module>
