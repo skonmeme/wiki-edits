@@ -2,7 +2,7 @@ package com.skt.skon.wikiedits.config
 
 import scopt.OptionParser
 
-case class WikipediaAnalysisConfig(sessionGapInMillis: Long = 2000,
+case class WikipediaAnalysisConfig(sessionGap: Long = 5 * 60 * 1000,
                                    brokers: Seq[String] = Seq(),
                                    topicSummary: String = "",
                                    topicContents: String = "",
@@ -16,8 +16,7 @@ case class WikipediaAnalysisConfig(sessionGapInMillis: Long = 2000,
                                    kafkaTransactionMaxTimeout: Long = 900000,
                                    checkpointStateBackend: StateBackend = NoStateBackend(),
                                    checkpointDataUri: String = "",
-                                   checkpointInterval: Long = -1,
-                                   sessionTimeout: Long = 60
+                                   checkpointInterval: Long = -1
                                   )
 
 object WikipediaAnalysisConfig {
@@ -29,9 +28,9 @@ object WikipediaAnalysisConfig {
 
       opt[Long]('s', "session-gap")
         .required()
-        .action((x, c) => c.copy(sessionGapInMillis = x))
+        .action((x, c) => c.copy(sessionGap = x))
         .validate(x => if (x > 0) success else failure(s"session-gap must be positive but $x"))
-        .text("Session gap in milliseconds")
+        .text("Session gap in mininutes")
 
       opt[Seq[String]]('b', "brokers")
         .required()
@@ -80,12 +79,7 @@ object WikipediaAnalysisConfig {
       opt[Long]("kafka-transaction-max-timeout")
         .action((x, c) => c.copy(kafkaTransactionMaxTimeout = x))
         .validate(x => if (x > 0) success else failure(s"kafka-transaction-max-timeout must be positive but $x"))
-
-      opt[Long]("session-timeout")
-        .action((x, c) => c.copy(sessionTimeout = x))
-        .validate(x => if (x > 0) success else failure(s"session-timeout must be positive but $x"))
-        .text("collection timeout (minute)")
-
+      
       opt[String]("checkpoint-data-uri")
         .action((x, c) => c.copy(checkpointDataUri = x))
 

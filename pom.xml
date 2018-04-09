@@ -139,6 +139,11 @@ under the License.
             <artifactId>json4s-native_${scala.binary.version}</artifactId>
             <version>3.5.3</version>
         </dependency>
+		<dependency>
+			<groupId>org.json4s</groupId>
+			<artifactId>json4s-ext_${scala.binary.version}</artifactId>
+			<version>3.5.3</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/codes.reactive/scala-time-threeten -->
 		<dependency>
 			<groupId>com.github.nscala-time</groupId>

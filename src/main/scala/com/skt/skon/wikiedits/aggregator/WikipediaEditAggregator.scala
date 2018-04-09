@@ -2,8 +2,9 @@ package com.skt.skon.wikiedits.aggregator
 
 import org.apache.flink.api.common.functions.AggregateFunction
 import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditEvent
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
+import org.json4s.ext._
 import org.json4s.native.Serialization._
 
 case class WikipediaEditSummary(user: String,
@@ -24,13 +25,13 @@ class WikipediaEditEventSummaryAggregate extends AggregateFunction[WikipediaEdit
   // https://stackoverflow.com/questions/12031333/converting-unix-timestamp-to-string-with-joda-time?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
   // Unix time is in seconds, Java time is milliseconds
   override def add(value: WikipediaEditEvent, accumulator: (String, DateTime, Long, Long)) =
-    (value.getUser, new DateTime(value.getTimestamp * 1000L), 1, value.getByteDiff + accumulator._4)
+    (value.getUser, new DateTime(value.getTimestamp, DateTimeZone.UTC), 1, value.getByteDiff + accumulator._4)
 
   override def merge(a: (String, DateTime, Long, Long), b: (String, DateTime, Long, Long)): (String, DateTime, Long, Long) =
     (a._1, a._2, a._3 + b._3, a._4 + b._4)
 
   override def getResult(accumulator: (String, DateTime, Long, Long)): String = {
-    implicit val Formats = DefaultFormats
+    implicit val Formats = DefaultFormats ++ JodaTimeSerializers.all
     write(WikipediaEditSummary.tupled(accumulator))
   }
 }
@@ -40,13 +41,13 @@ class WikipediaEditEventContentsAggregate extends AggregateFunction[WikipediaEdi
     ("", 0, Array(), Array(), Array())
 
   override def add(value: WikipediaEditEvent, accumulator: (String, Long, Array[String], Array[String], Array[DateTime])): (String, Long, Array[String], Array[String], Array[DateTime]) =
-    (value.getUser, 1, Array(value.getDiffUrl), Array(value.getSummary), Array(new DateTime(value.getTimestamp * 1000L)))
+    (value.getUser, 1, Array(value.getDiffUrl), Array(value.getSummary), Array(new DateTime(value.getTimestamp, DateTimeZone.UTC)))
 
   override def merge(a: (String, Long, Array[String], Array[String], Array[DateTime]), b: (String, Long, Array[String], Array[String], Array[DateTime])): (String, Long, Array[String], Array[String], Array[DateTime]) =
     (a._1, a._2 + b._2, a._3 ++ b._3, a._4 ++ b._4, a._5 ++ a._5)
 
   override def getResult(accumulator: (String, Long, Array[String], Array[String], Array[DateTime])): String = {
-    implicit val Formats = DefaultFormats
+    implicit val Formats = DefaultFormats ++ JodaTimeSerializers.all
     write(WikipediaEditContents.tupled(accumulator))
   }
 }
