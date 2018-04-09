@@ -60,7 +60,7 @@ object WikipediaAnalysis {
       .addSource(new WikipediaEditsSource("irc.wikimedia.org", 6667, "#en.wikipedia"))
       .assignTimestampsAndWatermarks(new WikipediaTimestampsAndWatermarks)
       .keyBy(_.getUser)
-      .window(EventTimeSessionWindows.withGap(Time.minutes(wikipediaConfig.sessionTimeout)))
+      .window(EventTimeSessionWindows.withGap(Time.minutes(wikipediaConfig.sessionGap)))
 
     val toKafkaSummary = wikiEdits
       .aggregate(new WikipediaEditEventSummaryAggregate)
