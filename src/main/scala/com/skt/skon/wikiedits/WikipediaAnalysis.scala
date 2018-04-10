@@ -8,9 +8,9 @@ import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, GlobalWindows}
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011
-import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditsSource
 import com.skt.skon.wikiedits.aggregator._
 import com.skt.skon.wikiedits.config._
+import com.skt.skon.wikiedits.dataSources.WikipediaDataSources
 import com.skt.skon.wikiedits.eventTime.WikipediaTimestampsAndWatermarks
 import org.apache.flink.streaming.api.windowing.triggers.CountTrigger
 
@@ -34,6 +34,7 @@ object WikipediaAnalysis {
     // Generate Flink environmental settings
     val environment = StreamExecutionEnvironment.getExecutionEnvironment
     environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+    environment.setParallelism(2)
 
     wikipediaConfig.checkpointStateBackend match {
       case MemoryStateBackend() =>
@@ -56,8 +57,7 @@ object WikipediaAnalysis {
       }
     }
 
-    val wikiEdits = environment
-      .addSource(new WikipediaEditsSource("irc.wikimedia.org", 6667, "#en.wikipedia"))
+    val wikiEdits = WikipediaDataSources.combine(environment, wikipediaConfig.wikpediaChannels)
       .assignTimestampsAndWatermarks(new WikipediaTimestampsAndWatermarks)
       .keyBy(_.getUser)
 

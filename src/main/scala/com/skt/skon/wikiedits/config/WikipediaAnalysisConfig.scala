@@ -2,7 +2,8 @@ package com.skt.skon.wikiedits.config
 
 import scopt.OptionParser
 
-case class WikipediaAnalysisConfig(sessionGap: Long = 5 * 60 * 1000,
+case class WikipediaAnalysisConfig(wikpediaChannels: Seq[String] = Seq("en"),
+                                   sessionGap: Long = 5 * 60 * 1000,
                                    brokers: Seq[String] = Seq(),
                                    topicSummary: String = "",
                                    topicContents: String = "",
@@ -26,6 +27,11 @@ object WikipediaAnalysisConfig {
 
       help("help").text("prints this usage text")
 
+      opt[Seq[String]]('c', name = "channel-list")
+        .valueName("channel,channel")
+        .action((x, c) => c.copy(wikpediaChannels = x))
+        .text("List of Wikipedia channel list")
+
       opt[Long]('s', "session-gap")
         .required()
         .action((x, c) => c.copy(sessionGap = x))
@@ -48,7 +54,7 @@ object WikipediaAnalysisConfig {
         .action((x, c) => c.copy(groupId = x))
         .text("Kafka consumer group id")
 
-      opt[String]('c', "topic-contents")
+      opt[String]("topic-contents")
         .action((x, c) => c.copy(topicContents = x))
         .text("Kafka topic for Contents")
 
