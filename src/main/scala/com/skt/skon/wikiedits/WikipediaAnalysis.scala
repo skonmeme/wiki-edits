@@ -5,13 +5,14 @@ import java.util.Properties
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows
+import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, GlobalWindows}
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011
 import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditsSource
 import com.skt.skon.wikiedits.aggregator._
 import com.skt.skon.wikiedits.config._
 import com.skt.skon.wikiedits.eventTime.WikipediaTimestampsAndWatermarks
+import org.apache.flink.streaming.api.windowing.triggers.CountTrigger
 
 object WikipediaAnalysis {
 
@@ -33,7 +34,6 @@ object WikipediaAnalysis {
     // Generate Flink environmental settings
     val environment = StreamExecutionEnvironment.getExecutionEnvironment
     environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
-    environment.setParallelism(2)
 
     wikipediaConfig.checkpointStateBackend match {
       case MemoryStateBackend() =>
@@ -60,11 +60,12 @@ object WikipediaAnalysis {
       .addSource(new WikipediaEditsSource("irc.wikimedia.org", 6667, "#en.wikipedia"))
       .assignTimestampsAndWatermarks(new WikipediaTimestampsAndWatermarks)
       .keyBy(_.getUser)
-      .window(EventTimeSessionWindows.withGap(Time.minutes(wikipediaConfig.sessionGap)))
 
     val toKafkaSummary = wikiEdits
+      .window(EventTimeSessionWindows.withGap(Time.minutes(wikipediaConfig.sessionGap)))
       .aggregate(new WikipediaEditEventSummaryAggregate)
       .addSink(wikiProducerSummary)
+      .setParallelism(1)
 
     if (wikipediaConfig.topicContents != "") {
       val wikiProducerContents = new FlinkKafkaProducer011[String](
@@ -75,13 +76,12 @@ object WikipediaAnalysis {
       wikiProducerContents.setWriteTimestampToKafka(true)
 
       val toKafkaContents = wikiEdits
+        .window(GlobalWindows.create)
+        .trigger(CountTrigger.of(1))
         .aggregate(new WikipediaEditEventContentsAggregate)
         .addSink(wikiProducerContents)
+        .setParallelism(1)
     }
-
-    val toConsole = wikiEdits
-      .aggregate(new WikipediaEditEventSummaryAggregate)
-      .print
 
     environment.execute("Wikipedia Edit logs")
   }
