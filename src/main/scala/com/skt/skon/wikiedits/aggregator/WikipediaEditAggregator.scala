@@ -13,18 +13,17 @@ case class WikipediaEditSummary(user: String,
                                 bytes: Long)
 
 case class WikipediaEditContents(user: String,
-                                 count: Long,
-                                 urls: Array[String],
-                                 summaries: Array[String],
-                                 created_at: Array[DateTime])
+                                 created_at: DateTime,
+                                 title: String,
+                                 channel: String,
+                                 summaries: String,
+                                 url: String)
 
 class WikipediaEditEventSummaryAggregate extends AggregateFunction[WikipediaEditEvent, (String, DateTime, Long, Long), String] {
   override def createAccumulator(): (String, DateTime, Long, Long) =
     ("", null, 0L, 0L)
 
-  // https://stackoverflow.com/questions/12031333/converting-unix-timestamp-to-string-with-joda-time?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-  // Unix time is in seconds, Java time is milliseconds
-  override def add(value: WikipediaEditEvent, accumulator: (String, DateTime, Long, Long)) =
+  override def add(value: WikipediaEditEvent, accumulator: (String, DateTime, Long, Long)) : (String, DateTime, Long, Long) =
     (value.getUser, new DateTime(value.getTimestamp, DateTimeZone.UTC), 1, value.getByteDiff + accumulator._4)
 
   override def merge(a: (String, DateTime, Long, Long), b: (String, DateTime, Long, Long)): (String, DateTime, Long, Long) =
@@ -36,18 +35,22 @@ class WikipediaEditEventSummaryAggregate extends AggregateFunction[WikipediaEdit
   }
 }
 
-class WikipediaEditEventContentsAggregate extends AggregateFunction[WikipediaEditEvent, (String, Long, Array[String], Array[String], Array[DateTime]), String] {
-  override def createAccumulator(): (String, Long, Array[String], Array[String], Array[DateTime]) =
-    ("", 0, Array(), Array(), Array())
+class WikipediaEditEventContentsAggregate extends AggregateFunction[WikipediaEditEvent, WikipediaEditEvent, String] {
+  override def createAccumulator(): WikipediaEditEvent = null
 
-  override def add(value: WikipediaEditEvent, accumulator: (String, Long, Array[String], Array[String], Array[DateTime])): (String, Long, Array[String], Array[String], Array[DateTime]) =
-    (value.getUser, 1, Array(value.getDiffUrl), Array(value.getSummary), Array(new DateTime(value.getTimestamp, DateTimeZone.UTC)))
+  override def add(value: WikipediaEditEvent, accumulator: WikipediaEditEvent): WikipediaEditEvent = value
 
-  override def merge(a: (String, Long, Array[String], Array[String], Array[DateTime]), b: (String, Long, Array[String], Array[String], Array[DateTime])): (String, Long, Array[String], Array[String], Array[DateTime]) =
-    (a._1, a._2 + b._2, a._3 ++ b._3, a._4 ++ b._4, a._5 ++ a._5)
+  override def merge(accumulator1: WikipediaEditEvent, accumulator2: WikipediaEditEvent): WikipediaEditEvent = accumulator2
 
-  override def getResult(accumulator: (String, Long, Array[String], Array[String], Array[DateTime])): String = {
+  override def getResult(accumulator: WikipediaEditEvent): String = {
     implicit val Formats = DefaultFormats ++ JodaTimeSerializers.all
-    write(WikipediaEditContents.tupled(accumulator))
+    write(WikipediaEditContents.tupled((
+      accumulator.getUser,
+      new DateTime(accumulator.getTimestamp, DateTimeZone.UTC),
+      accumulator.getTitle,
+      accumulator.getChannel,
+      accumulator.getSummary,
+      accumulator.getDiffUrl
+    )))
   }
 }
