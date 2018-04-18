@@ -12,6 +12,7 @@ import com.skt.skon.wikiedits.aggregator._
 import com.skt.skon.wikiedits.config._
 import com.skt.skon.wikiedits.dataSources.WikipediaDataSources
 import com.skt.skon.wikiedits.eventTime.WikipediaTimestampsAndWatermarks
+import com.skt.skon.wikiedits.metrics.{WikipeditEditContentsMapper, WikipeditEditSummaryMapper}
 import org.apache.flink.streaming.api.windowing.triggers.CountTrigger
 
 object WikipediaAnalysis {
@@ -64,6 +65,7 @@ object WikipediaAnalysis {
     val toKafkaSummary = wikiEdits
       .window(EventTimeSessionWindows.withGap(Time.minutes(wikipediaConfig.sessionGap)))
       .aggregate(new WikipediaEditEventSummaryAggregate)
+      .map(new WikipeditEditSummaryMapper)
       .addSink(wikiProducerSummary)
       .setParallelism(1)
 
@@ -79,6 +81,7 @@ object WikipediaAnalysis {
         .window(GlobalWindows.create)
         .trigger(CountTrigger.of(1))
         .aggregate(new WikipediaEditEventContentsAggregate)
+        .map(new WikipeditEditContentsMapper)
         .addSink(wikiProducerContents)
         .setParallelism(1)
     }
