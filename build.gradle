@@ -1,0 +1,37 @@
+apply plugin: 'scala'
+apply plugin: 'maven'
+
+group = 'wiki-edits'
+version = '0.1'
+
+description = """Flink Quickstart Job"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+
+
+repositories {
+        
+     maven { url "https://repository.apache.org/content/repositories/snapshots/" }
+     maven { url "http://repo.maven.apache.org/maven2" }
+}
+dependencies {
+    compile group: 'org.apache.flink', name: 'flink-core', version:'1.4.2'
+    compile group: 'org.apache.flink', name: 'flink-clients_2.11', version:'1.4.2'
+    compile group: 'org.apache.flink', name: 'flink-scala_2.11', version:'1.4.2'
+    compile group: 'org.apache.flink', name: 'flink-streaming-scala_2.11', version:'1.4.2'
+    compile group: 'org.apache.flink', name: 'flink-connector-wikiedits_2.11', version:'1.4.2'
+    compile group: 'org.apache.flink', name: 'flink-connector-kafka-0.11_2.11', version:'1.4.2'
+    compile group: 'org.scala-lang', name: 'scala-library', version:'2.11.11'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.7'
+    compile group: 'log4j', name: 'log4j', version:'1.2.17'
+    compile group: 'com.github.scopt', name: 'scopt_2.11', version:'3.7.0'
+    compile group: 'org.apache.flink', name: 'flink-statebackend-rocksdb_2.11', version:'1.4.2'
+    compile group: 'org.json4s', name: 'json4s-native_2.11', version:'3.5.3'
+    compile group: 'org.json4s', name: 'json4s-ext_2.11', version:'3.5.3'
+    compile group: 'com.github.nscala-time', name: 'nscala-time_2.11', version:'2.18.0'
+}
