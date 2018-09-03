@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export HADOOP_CLASSPATH=`hadoop classpath`
-export FLINK_CONF_DIR='/Volumes/Contents HD/SK/DACoE/skon/wiki-edits/conf'
+export FLINK_CONF_DIR='./conf'
 
 jar=$(ls build/libs/wiki-edits*.jar | sort -V | tail -n 1)
 
