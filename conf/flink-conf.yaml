@@ -6,3 +6,5 @@ metrics.reporter.prom.port: 9249-9300
 
 state.savepoints.dir: hdfs://skonuniverse:8020/flink-savepoint
 state.checkpoints.dir: hdfs://skonuniverse:8020/flink-checkpoint-meta
+
+#akka.log.lifecycle.events: true

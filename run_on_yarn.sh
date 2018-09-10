@@ -19,10 +19,10 @@ PARAM="--channel-list en,ko,jp,de,es,fr,ru,pt,it,zh,pl \
 flink run \
   --jobmanager yarn-cluster \
   --yarndetached \
-  --yarncontainer 2 \
+  --yarncontainer 1 \
   --yarnqueue default \
-  --yarnjobManagerMemory 1024m \
-  --yarntaskManagerMemory 1024m \
+  --yarnjobManagerMemory 1024 \
+  --yarntaskManagerMemory 1024 \
   --yarnslots 2 \
   --class $ENTRYCLASS \
   $jar \
