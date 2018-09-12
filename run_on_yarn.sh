@@ -12,15 +12,15 @@ PARAM="--channel-list en,ko,jp,de,es,fr,ru,pt,it,zh,pl \
 --brokers 192.168.10.254:9092 \
 --topic-summary wiki-edits-summary --topic-contents wiki-edits-contents \
 --group-id other \
---checkpoint-data-uri hdfs://skonuniverse:8020/flink \
+--checkpoint-data-uri hdfs://skonuniverse:8020/flink/checkpoint \
 --checkpoint-state-backend fs \
 --checkpoint-interval $((5*1000*60))"
 
 flink run \
   --jobmanager yarn-cluster \
-  --yarndetached \
   --yarncontainer 1 \
   --yarnqueue default \
+  --yarndetached \
   --yarnjobManagerMemory 1024 \
   --yarntaskManagerMemory 1024 \
   --yarnslots 2 \
