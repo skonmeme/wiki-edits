@@ -55,15 +55,16 @@ dependencies {
     compile group: "org.apache.flink", name: "flink-statebackend-rocksdb_${scalaVersion}", version: "${flinkVersion}"
 
     // logger
-    compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.7.7"
+    compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.7.25"
     compile group: "log4j", name: "log4j", version: "1.2.17"
 
     // others
-    compile group: "com.github.scopt", name: "scopt_$scalaVersion", version: "3.7.0"
-    compile group: "org.json4s", name: "json4s-native_$scalaVersion", version: "3.5.3"
-    compile group: "org.json4s", name: "json4s-ext_$scalaVersion", version: "3.5.3"
-    compile group: "com.github.nscala-time", name: "nscala-time_$scalaVersion", version: "2.18.0"
-}
+    compile group: "com.github.scopt", name: "scopt_$scalaVersion", version: "3.7.1"
+    compile group: "org.json4s", name: "json4s-native_$scalaVersion", version: "3.6.3"
+    compile group: "org.json4s", name: "json4s-ext_$scalaVersion", version: "3.6.3"
+    compile group: "com.github.nscala-time", name: "nscala-time_$scalaVersion", version: "2.20.0"
 
-shadowJar {
+    // test
+    testCompile group: 'org.scalatest', name: "scalatest_$scalaVersion", version: '3.0.5'
+    //testRuntime group: 'org.pegdown', name: 'pegdown', version: '1.4.2'
 }
