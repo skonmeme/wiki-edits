@@ -21,7 +21,7 @@ object WikipediaAnalysis {
     val wikipediaConfig = WikipediaAnalysisConfig.get(args, "Wikipedia Edits analyzer")
 
     val kafkaProducerProperties = new Properties()
-    kafkaProducerProperties.put("bootstrap.servers", wikipediaConfig.brokers.mkString(","))
+    kafkaProducerProperties.put("bootstrap.servers", wikipediaConfig.outputBrokers.mkString(","))
     kafkaProducerProperties.put("max.request.size", wikipediaConfig.kafkaMaxRequestSize.toString)
     kafkaProducerProperties.put("transaction.timeout.ms", wikipediaConfig.kafkaTransactionMaxTimeout.toString)
 

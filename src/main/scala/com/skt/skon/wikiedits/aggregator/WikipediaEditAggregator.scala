@@ -3,9 +3,9 @@ package com.skt.skon.wikiedits.aggregator
 import org.apache.flink.api.common.functions.AggregateFunction
 import org.apache.flink.streaming.connectors.wikiedits.WikipediaEditEvent
 import org.joda.time.{DateTime, DateTimeZone}
-import org.json4s._
-import org.json4s.ext._
-import org.json4s.native.Serialization._
+import org.json4s.DefaultFormats
+import org.json4s.ext.JodaTimeSerializers
+import org.json4s.native.Serialization.write
 
 case class WikipediaEditSummary(user: String,
                                 start_at: DateTime,
@@ -30,7 +30,7 @@ class WikipediaEditEventSummaryAggregate extends AggregateFunction[WikipediaEdit
     (a._1, a._2, a._3 + b._3, a._4 + b._4)
 
   override def getResult(accumulator: (String, DateTime, Long, Long)): String = {
-    implicit val Formats = DefaultFormats ++ JodaTimeSerializers.all
+    implicit val formats = DefaultFormats ++ JodaTimeSerializers.all
     write(WikipediaEditSummary.tupled(accumulator))
   }
 }
@@ -43,7 +43,7 @@ class WikipediaEditEventContentsAggregate extends AggregateFunction[WikipediaEdi
   override def merge(accumulator1: WikipediaEditEvent, accumulator2: WikipediaEditEvent): WikipediaEditEvent = accumulator2
 
   override def getResult(accumulator: WikipediaEditEvent): String = {
-    implicit val Formats = DefaultFormats ++ JodaTimeSerializers.all
+    implicit val formats = DefaultFormats ++ JodaTimeSerializers.all
     write(WikipediaEditContents.tupled((
       accumulator.getUser,
       new DateTime(accumulator.getTimestamp, DateTimeZone.UTC),

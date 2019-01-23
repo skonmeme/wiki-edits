@@ -25,7 +25,7 @@ tasks.withType(ScalaCompile) {
 }
 
 jar {
-    finalizedBy shadowJar
+//    finalizedBy shadowJar
     manifest {
         attributes 'Implementation-Title': description,
                 'Implementation-Version': version,
