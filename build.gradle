@@ -8,7 +8,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.3'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
     }
 }
 
@@ -67,4 +67,12 @@ dependencies {
     // test
     testCompile group: 'org.scalatest', name: "scalatest_$scalaVersion", version: '3.0.5'
     //testRuntime group: 'org.pegdown', name: 'pegdown', version: '1.4.2'
+}
+
+shadowJar {
+    dependencies {
+        exclude(dependency("org.apache.flink:flink-clients_${scalaVersion}:${flinkVersion}"))
+        exclude(dependency("org.apache.flink:flink-scala_${scalaVersion}:${flinkVersion}"))
+        exclude(dependency("org.apache.flink:flink-streaming-scala_${scalaVersion}:${flinkVersion}"))
+    }
 }
