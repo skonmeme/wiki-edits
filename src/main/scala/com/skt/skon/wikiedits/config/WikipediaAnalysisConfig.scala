@@ -4,15 +4,16 @@ import scopt.OptionParser
 
 case class WikipediaAnalysisConfig(wikpediaChannels: Seq[String] = Seq("en"),
                                    sessionGap: Long = 5 * 60 * 1000,
-                                   brokers: Seq[String] = Seq(),
-                                   topicSummary: String = "",
-                                   topicContents: String = "",
-                                   groupId: String = "",
+                                   outputBrokers: Seq[String] = Seq(),
+                                   topicSummary: String = "wiki-edits-summary",
+                                   topicContents: String = "wiki-edits-contents",
+                                   groupId: String = "flink-wiki-edits",
                                    sourceTasks: Int = -1,
                                    windowTasks: Int = -1,
                                    sinkTasks: Int = -1,
                                    autoWatermarkInterval: Long = 1000L,
                                    maxOutOfOrderness: Long = 1000L,
+                                   kafkaProducerProperties: Map[String,String] = Map(),
                                    kafkaMaxRequestSize: Long = 1048576,
                                    kafkaTransactionMaxTimeout: Long = 900000,
                                    checkpointStateBackend: StateBackend = NoStateBackend(),
@@ -27,8 +28,9 @@ object WikipediaAnalysisConfig {
 
       help("help").text("prints this usage text")
 
-      opt[Seq[String]]('c', name = "channel-list")
-        .valueName("channel,channel")
+      opt[Seq[String]]('c',"channel-list")
+        .required()
+        .valueName("<channel>,<channel>...")
         .action((x, c) => c.copy(wikpediaChannels = x))
         .text("List of Wikipedia channel list")
 
@@ -38,25 +40,24 @@ object WikipediaAnalysisConfig {
         .validate(x => if (x > 0) success else failure(s"session-gap must be positive but $x"))
         .text("Session gap in mininutes")
 
-      opt[Seq[String]]('b', "brokers")
+      opt[Seq[String]]('o', "output-brokers")
         .required()
         .valueName("<addr:port>,<addr:port>...")
-        .action((x, c) => c.copy(brokers = x))
-        .text("List of Kafka brokers")
+        .action((x, c) => c.copy(outputBrokers = x))
+        .text("List of Kafka brokers for monitoring output")
 
       opt[String]('t', "topic-summary")
         .required()
         .action((x, c) => c.copy(topicSummary = x))
         .text("Kafka topic for Summary")
 
-      opt[String]('g', "group-id")
-        .required()
-        .action((x, c) => c.copy(groupId = x))
-        .text("Kafka consumer group id")
-
       opt[String]("topic-contents")
         .action((x, c) => c.copy(topicContents = x))
         .text("Kafka topic for Contents")
+
+      opt[String]('g', "group-id")
+        .action((x, c) => c.copy(groupId = x))
+        .text("Kafka consumer group id")
 
       opt[Int]("source-tasks")
         .action((x, c) => c.copy(sourceTasks = x))
@@ -85,6 +86,11 @@ object WikipediaAnalysisConfig {
       opt[Long]("kafka-transaction-max-timeout")
         .action((x, c) => c.copy(kafkaTransactionMaxTimeout = x))
         .validate(x => if (x > 0) success else failure(s"kafka-transaction-max-timeout must be positive but $x"))
+
+      opt[Map[String,String]]("kafka-producer-properties")
+        .valueName("<property>=<value>,<property>=<value>...")
+        .action((x, c) => c.copy(kafkaProducerProperties = x))
+        .text("Properties of Kafka producer for output")
       
       opt[String]("checkpoint-data-uri")
         .action((x, c) => c.copy(checkpointDataUri = x))

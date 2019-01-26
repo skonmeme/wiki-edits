@@ -7,7 +7,7 @@ import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, GlobalWindows}
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer
 import com.skt.skon.wikiedits.aggregator._
 import com.skt.skon.wikiedits.config._
 import com.skt.skon.wikiedits.dataSources.WikipediaDataSources
@@ -21,11 +21,11 @@ object WikipediaAnalysis {
     val wikipediaConfig = WikipediaAnalysisConfig.get(args, "Wikipedia Edits analyzer")
 
     val kafkaProducerProperties = new Properties()
-    kafkaProducerProperties.put("bootstrap.servers", wikipediaConfig.brokers.mkString(","))
+    kafkaProducerProperties.put("bootstrap.servers", wikipediaConfig.outputBrokers.mkString(","))
     kafkaProducerProperties.put("max.request.size", wikipediaConfig.kafkaMaxRequestSize.toString)
     kafkaProducerProperties.put("transaction.timeout.ms", wikipediaConfig.kafkaTransactionMaxTimeout.toString)
 
-    val wikiProducerSummary = new FlinkKafkaProducer011[String](
+    val wikiProducerSummary = new FlinkKafkaProducer[String](
       wikipediaConfig.topicSummary,
       new SimpleStringSchema,
       kafkaProducerProperties
@@ -70,7 +70,7 @@ object WikipediaAnalysis {
       .setParallelism(1)
 
     if (wikipediaConfig.topicContents != "") {
-      val wikiProducerContents = new FlinkKafkaProducer011[String](
+      val wikiProducerContents = new FlinkKafkaProducer[String](
         wikipediaConfig.topicContents,
         new SimpleStringSchema,
         kafkaProducerProperties
